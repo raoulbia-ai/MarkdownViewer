@@ -88,56 +88,6 @@ st.markdown("""
     .remove-button:hover {
         color: var(--secondary-color);
     }
-
-    /* Added to ensure printing is in light mode */
-    @media print {
-        :root {
-            --primary-color: #000000;
-            --secondary-color: #333333;
-            --background-color: #ffffff;
-            --surface-color: #f0f0f0;
-            --text-color: #000000;
-            --sidebar-color: #e0e0e0;
-        }
-        .stApp {
-            background-color: var(--background-color) !important;
-            color: var(--text-color) !important;
-        }
-        .sidebar .sidebar-content {
-            background-color: var(--sidebar-color) !important;
-        }
-        h1, h2, h3 {
-            color: var(--primary-color) !important;
-        }
-        .stButton>button {
-            background-color: var(--primary-color) !important;
-            color: var(--background-color) !important;
-        }
-        .stButton>button:hover {
-            background-color: var(--secondary-color) !important;
-        }
-        .highlight {
-            background-color: #f0f0f0 !important;
-            color: #000000 !important;
-        }
-        .file-item {
-            background-color: var(--background-color) !important;
-            color: var(--text-color) !important;
-        }
-        .file-item:hover {
-            background-color: var(--surface-color) !important;
-        }
-        .file-item-active {
-            background-color: var(--primary-color) !important;
-            color: var(--background-color) !important;
-        }
-        .remove-button {
-            color: var(--text-color) !important;
-        }
-        .remove-button:hover {
-            color: var(--secondary-color) !important;
-        }
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -187,7 +137,7 @@ with st.sidebar:
                     st.session_state.current_file = file
                     st.session_state.edit_mode = False
             with cols[1]:
-                if st.button("✖", key=f"remove_{file}", help="Remove file"):
+                if st.button("✖", key=f"remove_{file}", help="Remove file", on_click=None):
                     files_to_remove.append(file)
         # Remove files outside the loop to avoid runtime errors
         for file in files_to_remove:
