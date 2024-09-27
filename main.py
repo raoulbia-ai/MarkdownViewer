@@ -191,7 +191,7 @@ with st.sidebar:
         st.info("No files uploaded yet.")
 
     # Get the selected file from the query parameters
-    query_params = st.get_query_params()
+    query_params = st.experimental_get_query_params()
     if 'file' in query_params:
         selected_file = query_params['file'][0]
         if selected_file != st.session_state.current_file:
