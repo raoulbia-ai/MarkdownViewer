@@ -1,0 +1,100 @@
+# Revised Markdown Viewer Application Specification
+
+## 1. Overview
+
+This document outlines the revised specifications for a modern, visually appealing Markdown viewer application. The application will allow users to view, render, edit, and print multiple Markdown files simultaneously, with a focus on a sleek design and improved multi-file handling.
+
+## 2. Core Functionalities
+
+### 2.1 Multi-File System Browser
+
+- Implement a visually attractive file system browser that explicitly allows and encourages selection of multiple Markdown (.md) files.
+- Use a modern file picker component that supports:
+  - Multiple file selection through checkboxes or Ctrl/Cmd+Click
+  - Drag-and-drop functionality for multiple files
+  - Folder selection to import all Markdown files within
+- Display selected files in a stylish list or grid view, clearly indicating the number of files selected.
+- Implement a search or filter function to easily locate specific files within the selected set.
+
+### 2.2 Multi-File Markdown Rendering
+
+- Render multiple selected Markdown files simultaneously.
+- Implement a tab or accordion system to navigate between different files easily.
+- Provide an option for side-by-side comparison of two or more files.
+- Use a modern Markdown parsing library capable of handling multiple files efficiently.
+- Implement syntax highlighting for code blocks to enhance readability across all open files.
+
+### 2.3 PDF Printing
+
+- Allow printing of single files or batch printing of multiple selected files.
+- Implement a "Print as PDF" option that generates PDFs of only the rendered Markdown content.
+- For multiple files, offer options to:
+  - Print each file as a separate PDF
+  - Combine all selected files into a single PDF with clear demarcation between files
+- Ensure that the PDF output excludes any application UI elements, navigation bars, or unrelated content.
+- Implement a print preview feature supporting both single and multiple file previews.
+- Add options for users to customize the PDF output (e.g., font size, margins, header/footer) for batch printing.
+
+### 2.4 Mobile Responsiveness
+
+- Design the application layout to be fully responsive and mobile-friendly, even when handling multiple files.
+- Implement a fluid grid system that adapts to various screen sizes, with a focus on efficient space utilization for multiple file views.
+- Use touch-friendly controls and gestures for mobile users to switch between files easily.
+- Ensure that all features, including multiple file selection and PDF printing, work seamlessly on mobile devices.
+
+### 2.5 Dark Mode
+
+- Implement an aesthetically pleasing dark mode option for the application that works well with multiple open files.
+- Create a custom color palette for dark mode that ensures proper contrast and reduces eye strain, especially during extended multi-file reading or editing sessions.
+- Add a prominent, easily accessible toggle for switching between light and dark modes.
+- Ensure smooth transitions when switching between modes for a polished user experience across all open files.
+
+### 2.6 Multi-File Markdown Editing
+
+- Provide a sleek, modern text editor capable of handling multiple files simultaneously.
+- Implement a tabbed interface or split-view option for editing multiple files.
+- Include real-time preview of edited content alongside the editor for each file.
+- Implement syntax highlighting in the editor for improved readability and editing experience across all open files.
+- Add a visually appealing "Save All" button with appropriate feedback animations for batch saving.
+- Implement auto-save functionality for each open file to prevent data loss.
+
+## 3. User Interface and Design
+
+### 3.1 Overall Aesthetic
+
+- Adopt a clean, minimalist design language throughout the application that scales well with multiple open files.
+- Use a modern color scheme with carefully selected accent colors to highlight important elements and differentiate between files.
+- Implement subtle animations and transitions to enhance the user experience when switching between files.
+
+### 3.2 Layout
+
+- Create an intuitive, visually appealing layout with the following components:
+  - A stylish header with the application logo and main navigation
+  - A sidebar for file selection and list of open files, with clear indication of the number of files selected/open
+  - A main content area for rendered Markdown and editor, capable of displaying multiple files efficiently
+  - A floating action button for quick access to key functions (e.g., create new file, print, save all)
+  - A footer with additional options and dark mode toggle
+
+### 3.3 Typography
+
+- Use a modern, readable font for both the UI and rendered Markdown content that remains clear when viewing multiple files.
+- Implement a clear typographic hierarchy to distinguish between different levels of headers and content across files.
+
+### 3.4 Icons and Visual Elements
+
+- Utilize a consistent, visually appealing icon set throughout the application, including specific icons for multi-file operations.
+- Implement subtle visual cues (e.g., hover effects, active states) to improve user interaction feedback, especially for distinguishing between multiple open files.
+
+## 4. Multi-File Handling
+
+### 4.1 File Selection
+
+- Implement a visually appealing file selection process that clearly supports and encourages multiple file selection.
+- Add a recent files section for quick access to frequently used documents, allowing multiple selection from recent files as well.
+- Provide clear visual feedback on the number of files selected and their total size.
+
+### 4.2 File Saving
+
+- Implement a robust file saving system with clear visual feedback for saving multiple files.
+- Add options for auto-saving and version history for each file to prevent data loss.
+- Provide batch save operations for quickly saving changes to all modified files.
