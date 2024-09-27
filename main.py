@@ -61,22 +61,18 @@ st.markdown("""
         padding: 10px;
         margin-bottom: 10px;
     }
-    .file-item {
-        padding: 5px 10px;
-        margin: 5px 0;
-        background-color: var(--background-color);
-        border-radius: 3px;
+    .file-link {
         color: var(--text-color);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        text-decoration: none;
+        display: block;
+        padding: 5px 0;
     }
-    .file-item:hover {
-        background-color: var(--surface-color);
+    .file-link:hover {
+        color: var(--primary-color);
     }
-    .file-item-active {
-        background-color: var(--primary-color);
-        color: var(--background-color);
+    .file-link-active {
+        font-weight: bold;
+        color: var(--primary-color);
     }
     .remove-button {
         background-color: transparent;
@@ -87,6 +83,54 @@ st.markdown("""
     }
     .remove-button:hover {
         color: var(--secondary-color);
+    }
+    /* Added to ensure printing is in light mode */
+    @media print {
+        :root {
+            --primary-color: #000000;
+            --secondary-color: #333333;
+            --background-color: #ffffff;
+            --surface-color: #f0f0f0;
+            --text-color: #000000;
+            --sidebar-color: #e0e0e0;
+        }
+        .stApp {
+            background-color: var(--background-color) !important;
+            color: var(--text-color) !important;
+        }
+        .sidebar .sidebar-content {
+            background-color: var(--sidebar-color) !important;
+        }
+        h1, h2, h3 {
+            color: var(--primary-color) !important;
+        }
+        .stButton>button {
+            background-color: var(--primary-color) !important;
+            color: var(--background-color) !important;
+        }
+        .stButton>button:hover {
+            background-color: var(--secondary-color) !important;
+        }
+        .highlight {
+            background-color: #f0f0f0 !important;
+            color: #000000 !important;
+        }
+        .file-link {
+            color: var(--text-color) !important;
+        }
+        .file-link:hover {
+            color: var(--primary-color) !important;
+        }
+        .file-link-active {
+            font-weight: bold !important;
+            color: var(--primary-color) !important;
+        }
+        .remove-button {
+            color: var(--text-color) !important;
+        }
+        .remove-button:hover {
+            color: var(--secondary-color) !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -130,15 +174,13 @@ with st.sidebar:
         files_to_remove = []
         for file in st.session_state.files.keys():
             is_active = (file == st.session_state.current_file)
-            file_display = f"**{file}**" if is_active else file
-            cols = st.columns([0.8, 0.2])
-            with cols[0]:
-                if st.button(file_display, key=f"select_{file}"):
-                    st.session_state.current_file = file
-                    st.session_state.edit_mode = False
-            with cols[1]:
-                if st.button("✖", key=f"remove_{file}", help="Remove file", on_click=None):
-                    files_to_remove.append(file)
+            active_class = "file-link-active" if is_active else ""
+            # Create a link to select the file
+            file_link = f"<a href='?file={file}' class='file-link {active_class}'>{file}</a>"
+            st.markdown(file_link, unsafe_allow_html=True)
+            # Add remove button
+            if st.button("✖", key=f"remove_{file}", help="Remove file"):
+                files_to_remove.append(file)
         # Remove files outside the loop to avoid runtime errors
         for file in files_to_remove:
             del st.session_state.files[file]
@@ -146,6 +188,15 @@ with st.sidebar:
                 st.session_state.current_file = None
     else:
         st.info("No files uploaded yet.")
+
+    # Get the selected file from the query parameters
+    query_params = st.experimental_get_query_params()
+    if 'file' in query_params:
+        selected_file = query_params['file'][0]
+        if selected_file != st.session_state.current_file:
+            if selected_file in st.session_state.files:
+                st.session_state.current_file = selected_file
+                st.session_state.edit_mode = False
 
     # Edit mode toggle
     if st.session_state.current_file:
@@ -207,20 +258,24 @@ if st.session_state.files:
             prevFile();
         }
     });
-    
+
     function nextFile() {
-        const buttons = Array.from(document.querySelectorAll('button[kind="secondary"]')).filter(btn => btn.innerText !== '✖');
-        const selectedIndex = buttons.findIndex(btn => btn.style.fontWeight === 'bold');
-        if (selectedIndex < buttons.length - 1) {
-            buttons[selectedIndex + 1].click();
+        const links = Array.from(document.querySelectorAll('.file-link'));
+        const currentUrl = new URL(window.location.href);
+        const currentFile = currentUrl.searchParams.get('file');
+        let selectedIndex = links.findIndex(link => link.href.includes(currentFile));
+        if (selectedIndex < links.length - 1) {
+            window.location.href = links[selectedIndex + 1].href;
         }
     }
-    
+
     function prevFile() {
-        const buttons = Array.from(document.querySelectorAll('button[kind="secondary"]')).filter(btn => btn.innerText !== '✖');
-        const selectedIndex = buttons.findIndex(btn => btn.style.fontWeight === 'bold');
+        const links = Array.from(document.querySelectorAll('.file-link'));
+        const currentUrl = new URL(window.location.href);
+        const currentFile = currentUrl.searchParams.get('file');
+        let selectedIndex = links.findIndex(link => link.href.includes(currentFile));
         if (selectedIndex > 0) {
-            buttons[selectedIndex - 1].click();
+            window.location.href = links[selectedIndex - 1].href;
         }
     }
     </script>
