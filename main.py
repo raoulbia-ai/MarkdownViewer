@@ -1,25 +1,22 @@
 import streamlit as st
-import os
-import base64
-from io import BytesIO
-from streamlit_ace import st_ace
 import markdown
+from streamlit_ace import st_ace
 from pygments.formatters import HtmlFormatter
 from datetime import datetime
-import json
 
 st.set_page_config(page_title="Modern Markdown Viewer", layout="wide")
 
-# Custom CSS for modern styling
+# Custom CSS for modern styling with dark mode
 st.markdown("""
 <style>
-    /* Modern color scheme */
+    /* Dark mode color scheme */
     :root {
-        --primary-color: #6200EA;
+        --primary-color: #BB86FC;
         --secondary-color: #03DAC6;
-        --background-color: #FFFFFF;
-        --text-color: #333333;
-        --sidebar-color: #F5F5F5;
+        --background-color: #121212;
+        --surface-color: #1E1E1E;
+        --text-color: #E0E0E0;
+        --sidebar-color: #1A1A1A;
     }
     .stApp {
         background-color: var(--background-color);
@@ -34,7 +31,7 @@ st.markdown("""
     }
     .stButton>button {
         background-color: var(--primary-color);
-        color: white;
+        color: var(--background-color);
         border: none;
         padding: 10px 20px;
         text-align: center;
@@ -49,42 +46,12 @@ st.markdown("""
     .stButton>button:hover {
         background-color: var(--secondary-color);
     }
-    /* Syntax highlighting styles */
-    ${HtmlFormatter(style="github").get_style_defs('.highlight')}
-    /* Floating action button */
-    .floating-button {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 100;
-    }
-    /* Smooth transitions */
-    * {
-        transition: all 0.3s ease;
-    }
-    /* File list styling */
-    .file-list {
-        background-color: #f0f0f0;
-        border-radius: 5px;
+    /* Syntax highlighting styles with darker background */
+    .highlight {
+        background-color: #2B2B2B;
+        color: #A9B7C6;
         padding: 10px;
-        margin-bottom: 20px;
-    }
-    .file-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 5px 10px;
-        margin: 5px 0;
-        background-color: white;
-        border-radius: 3px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    }
-    .file-name {
-        font-weight: bold;
-    }
-    .file-size {
-        color: #666;
-        font-size: 0.8em;
+        border-radius: 5px;
     }
     /* Tab styling */
     .stTabs [data-baseweb="tab-list"] {
@@ -93,15 +60,20 @@ st.markdown("""
     .stTabs [data-baseweb="tab"] {
         height: 50px;
         white-space: pre-wrap;
-        background-color: #f0f0f0;
+        background-color: var(--surface-color);
         border-radius: 4px 4px 0 0;
         gap: 4px;
         padding-top: 10px;
         padding-bottom: 10px;
+        color: var(--text-color);
     }
     .stTabs [aria-selected="true"] {
-        background-color: #6200EA;
-        color: white;
+        background-color: var(--primary-color);
+        color: var(--background-color);
+    }
+    /* Ensure line breaks are respected */
+    .markdown-body p {
+        white-space: pre-wrap;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -109,53 +81,15 @@ st.markdown("""
 # Session state initialization
 if 'files' not in st.session_state:
     st.session_state.files = {}
-if 'current_file' not in st.session_state:
-    st.session_state.current_file = None
 if 'edit_mode' not in st.session_state:
     st.session_state.edit_mode = False
-if 'file_history' not in st.session_state:
-    st.session_state.file_history = {}
 
 # File handling functions
 def save_file(name, content):
     st.session_state.files[name] = content
-    if name not in st.session_state.file_history:
-        st.session_state.file_history[name] = []
-    st.session_state.file_history[name].append({
-        'content': content,
-        'timestamp': datetime.now().isoformat()
-    })
-
-def delete_file(name):
-    if name in st.session_state.files:
-        del st.session_state.files[name]
-    if name in st.session_state.file_history:
-        del st.session_state.file_history[name]
-    if st.session_state.current_file == name:
-        st.session_state.current_file = None
 
 def render_markdown(text):
     return markdown.markdown(text, extensions=['extra', 'codehilite', 'tables', 'sane_lists', 'toc', 'fenced_code'])
-
-def generate_pdf(html_content):
-    # Placeholder for PDF generation
-    return b"PDF content"
-
-def get_binary_file_downloader_html(bin_file, file_label='File'):
-    bin_str = base64.b64encode(bin_file).decode()
-    href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{file_label}" class="stButton">Download {file_label}</a>'
-    return href
-
-def display_file_list(files):
-    st.markdown("<div class='file-list'>", unsafe_allow_html=True)
-    for file in files:
-        st.markdown(f"""
-        <div class='file-item'>
-            <span class='file-name'>{file.name}</span>
-            <span class='file-size'>{file.size} bytes</span>
-        </div>
-        """, unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # Sidebar
 with st.sidebar:
@@ -166,16 +100,6 @@ with st.sidebar:
     
     if uploaded_files:
         st.write(f"Selected {len(uploaded_files)} file(s)")
-        display_file_list(uploaded_files)
-        
-        # Search/filter function
-        search_term = st.text_input("Search files", "")
-        filtered_files = [file for file in uploaded_files if search_term.lower() in file.name.lower()]
-        
-        if search_term:
-            st.write(f"Found {len(filtered_files)} matching file(s)")
-            display_file_list(filtered_files)
-        
         for uploaded_file in uploaded_files:
             content = uploaded_file.getvalue().decode("utf-8")
             save_file(uploaded_file.name, content)
@@ -183,14 +107,22 @@ with st.sidebar:
     # Edit mode toggle
     st.session_state.edit_mode = st.checkbox("Edit Mode", value=st.session_state.edit_mode)
     
-    # PDF generation
+    # Print PDF button
     if st.session_state.files:
-        if st.button("Generate PDF for All Files"):
-            with st.spinner("Generating PDF..."):
-                all_content = "\n\n---\n\n".join([render_markdown(content) for content in st.session_state.files.values()])
-                pdf = generate_pdf(all_content)
-                st.markdown(get_binary_file_downloader_html(pdf, "all_files.pdf"), unsafe_allow_html=True)
-                st.success("PDF generated successfully!")
+        if st.button("Print PDF"):
+            st.markdown(
+                """
+                <script>
+                    window.print();
+                </script>
+                """,
+                unsafe_allow_html=True
+            )
+    
+    # Save button in edit mode
+    if st.session_state.edit_mode:
+        if st.button("Save Changes"):
+            st.success("Changes saved successfully!")
 
 # Main content
 if st.session_state.files:
@@ -200,32 +132,12 @@ if st.session_state.files:
         with tabs[i]:
             if st.session_state.edit_mode:
                 # Edit mode
-                new_content = st_ace(value=content, language="markdown", theme="github", key=f"editor_{file_name}")
-                if st.button("Save Changes", key=f"save_{file_name}"):
-                    save_file(file_name, new_content)
-                    st.success("Changes saved successfully!")
+                new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{file_name}")
+                st.session_state.files[file_name] = new_content
             else:
                 # View mode
                 rendered_content = render_markdown(content)
                 st.markdown(rendered_content, unsafe_allow_html=True)
-            
-            # File history
-            with st.expander("Version History"):
-                history = st.session_state.file_history.get(file_name, [])
-                for i, version in enumerate(reversed(history)):
-                    if st.button(f"Restore Version {len(history) - i}: {version['timestamp']}", key=f"restore_{file_name}_{i}"):
-                        st.session_state.files[file_name] = version['content']
-                        st.success(f"Restored to Version {len(history) - i}")
-                        st.experimental_rerun()
-
-    # Floating action buttons
-    st.markdown(
-        f"""
-        <div class="floating-button">
-            <button onclick="document.querySelector('.streamlit-expanderHeader').click()">{'📝' if not st.session_state.edit_mode else '👁️'}</button>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 else:
-    st.info("Please upload or select a Markdown file to get started.")
+    st.empty()  # Blank main area when no files are uploaded
+
