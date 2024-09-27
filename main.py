@@ -74,7 +74,7 @@ st.markdown("""
     }
     .file-item:hover {
         background-color: var(--primary-color);
-        color: var(--background-color);
+        color: var (--background-color);
     }
     .file-item.active {
         background-color: var(--primary-color);
