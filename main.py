@@ -88,6 +88,8 @@ if 'files' not in st.session_state:
     st.session_state.files = {}
 if 'current_file' not in st.session_state:
     st.session_state.current_file = None
+if 'edit_mode' not in st.session_state:
+    st.session_state.edit_mode = False
 
 # File handling functions
 def save_file(name, content):
@@ -115,7 +117,12 @@ with st.sidebar:
         active_class = "active" if file == st.session_state.current_file else ""
         if st.button(file, key=f"select_{file}", help=f"View {file}"):
             st.session_state.current_file = file
+            st.session_state.edit_mode = False
     st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Edit mode toggle
+    if st.session_state.current_file:
+        st.session_state.edit_mode = st.checkbox("Edit Mode", value=st.session_state.edit_mode)
 
 # Main content
 if st.session_state.files:
@@ -123,19 +130,16 @@ if st.session_state.files:
         # Display single file content
         content = st.session_state.files[st.session_state.current_file]
         
-        # Editor
-        new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{st.session_state.current_file}")
-        
-        # Save button
-        if st.button("Save Changes"):
-            save_file(st.session_state.current_file, new_content)
-            st.success("Changes saved successfully!")
-            st.experimental_rerun()
-        
-        # Preview
-        st.markdown("### Preview:")
-        rendered_content = render_markdown(new_content)
-        st.markdown(rendered_content, unsafe_allow_html=True)
+        if st.session_state.edit_mode:
+            new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{st.session_state.current_file}")
+            if st.button("Save Changes"):
+                save_file(st.session_state.current_file, new_content)
+                st.success("Changes saved successfully!")
+                st.session_state.edit_mode = False
+                st.experimental_rerun()
+        else:
+            rendered_content = render_markdown(content)
+            st.markdown(rendered_content, unsafe_allow_html=True)
     else:
         st.info("Select a file from the sidebar to view its content.")
 else:
