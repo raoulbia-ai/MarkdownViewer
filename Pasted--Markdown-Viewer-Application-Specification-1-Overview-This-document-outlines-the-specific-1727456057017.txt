@@ -1,0 +1,89 @@
+# Markdown Viewer Application Specification
+
+## 1. Overview
+
+This document outlines the specifications for a Markdown viewer application built using Streamlit. The application will allow users to view, render, edit, and print Markdown files, with a focus on minimizing dependencies and ensuring mobile-friendliness.
+
+## 2. Core Functionalities
+
+### 2.1 File System Browser
+
+- Implement a file system browser button that allows users to select one or more Markdown (.md) files.
+- Use Streamlit's built-in file uploader component to handle file selection.
+- Display the selected file(s) in a list for easy access.
+
+### 2.2 Markdown Rendering
+
+- Render the selected Markdown file(s) in real-time using Streamlit's native Markdown support.
+- Ensure proper formatting and styling of Markdown elements (headers, lists, code blocks, etc.).
+
+### 2.3 PDF Printing
+
+- Implement a "Print as PDF" option that generates a PDF of the rendered Markdown content.
+- Use a lightweight PDF generation library compatible with Streamlit (e.g., pdfkit or weasyprint).
+- Ensure that only the rendered Markdown content is included in the PDF, excluding any application UI elements.
+
+### 2.4 Mobile Responsiveness
+
+- Design the application layout to be responsive and mobile-friendly.
+- Utilize Streamlit's responsive design capabilities to ensure proper display on various screen sizes.
+- Implement touch-friendly controls for mobile users.
+
+### 2.5 Dark Mode
+
+- Implement a dark mode option for the application.
+- Use Streamlit's theming capabilities to switch between light and dark modes.
+- Ensure proper contrast and readability in both modes.
+
+### 2.6 Markdown Editing
+
+- Provide an option to edit the Markdown content directly within the application.
+- Implement a text area for editing the Markdown source.
+- Include a "Save" button to update the Markdown file with the edited content.
+- Automatically update the rendered view when changes are made.
+
+## 3. Technical Stack
+
+### 3.1 Core Framework
+
+- Use Streamlit as the primary framework for building the application.
+
+### 3.2 Dependencies
+
+Minimize dependencies by leveraging Streamlit's built-in capabilities. Additional libraries should be carefully chosen based on their lightweight nature and compatibility with Streamlit. Potential dependencies include:
+
+- streamlit (core framework)
+- pdfkit or weasyprint (for PDF generation)
+- watchdog (for file system monitoring, if needed)
+
+## 4. User Interface
+
+### 4.1 Layout
+
+- Implement a clean, intuitive layout with the following components:
+  - File selection button
+  - List of selected files
+  - Rendered Markdown view
+  - Markdown source editor (toggleable)
+  - Dark mode toggle
+  - Print as PDF button
+  - Save button (for edited content)
+
+### 4.2 Styling
+
+- Use Streamlit's built-in styling options to create a visually appealing interface.
+- Ensure consistent styling between light and dark modes.
+
+## 5. File Handling
+
+### 5.1 File Selection
+
+- Allow users to select multiple Markdown files.
+- Support drag-and-drop file selection if possible within Streamlit's constraints.
+
+### 5.2 File Saving
+
+- Implement proper error handling for file saving operations.
+- Provide user feedback on successful save or any errors encountered.
+
+## 6. Performance Considerations
