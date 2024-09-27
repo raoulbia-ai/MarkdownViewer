@@ -130,12 +130,28 @@ if st.session_state.files:
         # Display single file content
         content = st.session_state.files[st.session_state.current_file]
         
-        if st.session_state.edit_mode:
-            new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{st.session_state.current_file}")
-            if st.button("Save Changes"):
-                save_file(st.session_state.current_file, new_content)
-                st.success("Changes saved successfully!")
-                st.experimental_set_query_params(rerun=True)
+    if st.session_state.edit_mode:
+        # Initialize editor_content in session state if it doesn't exist
+        if 'editor_content' not in st.session_state or st.session_state.current_file != st.session_state.get('last_edited_file', None):
+            st.session_state.editor_content = content
+            st.session_state.last_edited_file = st.session_state.current_file
+
+        # Update editor content with st_ace
+        st.session_state.editor_content = st_ace(
+            value=st.session_state.editor_content,
+            language="markdown",
+            theme="monokai",
+            key=f"editor_{st.session_state.current_file}"
+        )
+
+        if st.button("Save Changes"):
+            save_file(st.session_state.current_file, st.session_state.editor_content)
+            st.success("Changes saved successfully!")
+            # Optionally, you can reset the editor content or exit edit mode
+            st.session_state.edit_mode = False
+            del st.session_state.editor_content
+            del st.session_state.last_edited_file
+
         else:
             rendered_content = render_markdown(content)
             st.markdown(rendered_content, unsafe_allow_html=True)
