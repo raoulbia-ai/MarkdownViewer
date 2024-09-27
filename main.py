@@ -86,6 +86,23 @@ st.markdown("""
         color: #666;
         font-size: 0.8em;
     }
+    /* Tab styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        background-color: #f0f0f0;
+        border-radius: 4px 4px 0 0;
+        gap: 4px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #6200EA;
+        color: white;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -163,35 +180,44 @@ with st.sidebar:
             content = uploaded_file.getvalue().decode("utf-8")
             save_file(uploaded_file.name, content)
     
-    # File selection
-    if st.session_state.files:
-        st.session_state.current_file = st.selectbox("Select a file", list(st.session_state.files.keys()))
-    
     # Edit mode toggle
-    if st.session_state.current_file:
-        st.session_state.edit_mode = st.checkbox("Edit Mode", value=st.session_state.edit_mode)
+    st.session_state.edit_mode = st.checkbox("Edit Mode", value=st.session_state.edit_mode)
     
     # PDF generation
-    if st.session_state.current_file:
-        if st.button("Generate PDF"):
+    if st.session_state.files:
+        if st.button("Generate PDF for All Files"):
             with st.spinner("Generating PDF..."):
-                pdf = generate_pdf(render_markdown(st.session_state.files[st.session_state.current_file]))
-                st.markdown(get_binary_file_downloader_html(pdf, f"{st.session_state.current_file}.pdf"), unsafe_allow_html=True)
+                all_content = "\n\n---\n\n".join([render_markdown(content) for content in st.session_state.files.values()])
+                pdf = generate_pdf(all_content)
+                st.markdown(get_binary_file_downloader_html(pdf, "all_files.pdf"), unsafe_allow_html=True)
                 st.success("PDF generated successfully!")
 
 # Main content
-if st.session_state.current_file:
-    if st.session_state.edit_mode:
-        # Edit mode
-        content = st_ace(value=st.session_state.files[st.session_state.current_file], language="markdown", theme="github")
-        if st.sidebar.button("Save Changes"):
-            save_file(st.session_state.current_file, content)
-            st.sidebar.success("Changes saved successfully!")
-    else:
-        # View mode
-        rendered_content = render_markdown(st.session_state.files[st.session_state.current_file])
-        st.markdown(rendered_content, unsafe_allow_html=True)
+if st.session_state.files:
+    tabs = st.tabs(list(st.session_state.files.keys()))
     
+    for i, (file_name, content) in enumerate(st.session_state.files.items()):
+        with tabs[i]:
+            if st.session_state.edit_mode:
+                # Edit mode
+                new_content = st_ace(value=content, language="markdown", theme="github", key=f"editor_{file_name}")
+                if st.button("Save Changes", key=f"save_{file_name}"):
+                    save_file(file_name, new_content)
+                    st.success("Changes saved successfully!")
+            else:
+                # View mode
+                rendered_content = render_markdown(content)
+                st.markdown(rendered_content, unsafe_allow_html=True)
+            
+            # File history
+            with st.expander("Version History"):
+                history = st.session_state.file_history.get(file_name, [])
+                for i, version in enumerate(reversed(history)):
+                    if st.button(f"Restore Version {len(history) - i}: {version['timestamp']}", key=f"restore_{file_name}_{i}"):
+                        st.session_state.files[file_name] = version['content']
+                        st.success(f"Restored to Version {len(history) - i}")
+                        st.experimental_rerun()
+
     # Floating action buttons
     st.markdown(
         f"""
@@ -201,15 +227,5 @@ if st.session_state.current_file:
         """,
         unsafe_allow_html=True
     )
-
-    # File history
-    with st.sidebar.expander("Version History"):
-        history = st.session_state.file_history.get(st.session_state.current_file, [])
-        for i, version in enumerate(reversed(history)):
-            if st.button(f"Restore Version {len(history) - i}: {version['timestamp']}"):
-                st.session_state.files[st.session_state.current_file] = version['content']
-                st.success(f"Restored to Version {len(history) - i}")
-                st.experimental_rerun()
-
 else:
     st.info("Please upload or select a Markdown file to get started.")
