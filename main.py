@@ -133,6 +133,22 @@ with st.sidebar:
     if st.session_state.current_file:
         st.session_state.edit_mode = st.checkbox("Edit Mode", value=st.session_state.edit_mode)
 
+    # Only visible in edit mode
+    if st.session_state.edit_mode:
+        # Save Changes button in the sidebar
+        def save_changes():
+            st.session_state.files[st.session_state.current_file] = st.session_state.editor_content
+            st.session_state.edit_mode = False
+
+        st.download_button(
+            label="Save Changes",
+            data=st.session_state.editor_content,
+            file_name=st.session_state.current_file,
+            mime="text/markdown",
+            key="save_button",
+            on_click=save_changes
+        )
+
 # Main content
 if st.session_state.files:
     if st.session_state.current_file:
@@ -151,13 +167,7 @@ if st.session_state.files:
                 theme="monokai",
                 key=f"editor_{st.session_state.current_file}"
             )
-            if st.button("Save Changes"):
-                save_file(st.session_state.current_file, st.session_state.editor_content)
-                st.success("Changes saved successfully!")
-                st.session_state.edit_mode = False
-                # Reset editor content
-                st.session_state.editor_content = ''
-                st.session_state.last_edited_file = None
+            # Removed the "Save Changes" button from here
         else:
             rendered_content = render_markdown(content)
             st.markdown(rendered_content, unsafe_allow_html=True)
