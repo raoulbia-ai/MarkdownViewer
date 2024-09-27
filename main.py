@@ -63,20 +63,18 @@ st.markdown("""
         margin-bottom: 10px;
     }
     .file-item {
-        display: block;
         padding: 5px 10px;
         margin: 5px 0;
         background-color: var(--background-color);
         border-radius: 3px;
         cursor: pointer;
-        text-decoration: none;
         color: var(--text-color);
     }
     .file-item:hover {
         background-color: var(--primary-color);
         color: var(--background-color);
     }
-    .file-item.active {
+    .file-item-active {
         background-color: var(--primary-color);
         color: var(--background-color);
     }
@@ -114,23 +112,23 @@ with st.sidebar:
             content = uploaded_file.getvalue().decode("utf-8")
             save_file(uploaded_file.name, content)
     
-    # Get file parameter from URL
-    query_params = st.experimental_get_query_params()
-    if 'file' in query_params:
-        file_param = query_params['file'][0]
-        if file_param in st.session_state.files:
-            st.session_state.current_file = file_param
-            st.session_state.edit_mode = False
-    
     # Display file list and total count
     st.markdown(f"<h3>Files ({len(st.session_state.files)})</h3>", unsafe_allow_html=True)
-    st.markdown("<div class='file-list'>", unsafe_allow_html=True)
-    for file in st.session_state.files.keys():
-        active_class = "active" if file == st.session_state.current_file else ""
-        file_html = f"<div class='file-item {active_class}'><a href='?file={file}'>{file}</a></div>"
-        st.markdown(file_html, unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
     
+    if st.session_state.files:
+        # Use st.radio for file selection
+        selected_file = st.radio(
+            label="Select a file",
+            options=list(st.session_state.files.keys()),
+            index=list(st.session_state.files.keys()).index(st.session_state.current_file) if st.session_state.current_file else 0,
+            key='file_selector'
+        )
+        if selected_file != st.session_state.current_file:
+            st.session_state.current_file = selected_file
+            st.session_state.edit_mode = False
+    else:
+        st.info("No files uploaded yet.")
+
     # Edit mode toggle
     if st.session_state.current_file:
         st.session_state.edit_mode = st.checkbox("Edit Mode", value=st.session_state.edit_mode)
@@ -169,30 +167,31 @@ else:
     st.info("Upload Markdown files using the sidebar to view and edit their content.")
 
 # Keyboard navigation
-st.markdown("""
-<script>
-document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.key === 'ArrowRight') {
-        nextFile();
-    } else if (e.ctrlKey && e.key === 'ArrowLeft') {
-        prevFile();
+if st.session_state.files:
+    st.markdown("""
+    <script>
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'ArrowRight') {
+            nextFile();
+        } else if (e.ctrlKey && e.key === 'ArrowLeft') {
+            prevFile();
+        }
+    });
+    
+    function nextFile() {
+        const options = document.querySelectorAll('input[type="radio"]');
+        const selected = Array.from(options).findIndex(radio => radio.checked);
+        if (selected < options.length - 1) {
+            options[selected + 1].click();
+        }
     }
-});
-
-function nextFile() {
-    var files = document.querySelectorAll('.file-item');
-    var currentIndex = Array.from(files).findIndex(f => f.classList.contains('active'));
-    if (currentIndex < files.length - 1) {
-        window.location.href = files[currentIndex + 1].querySelector('a').href;
+    
+    function prevFile() {
+        const options = document.querySelectorAll('input[type="radio"]');
+        const selected = Array.from(options).findIndex(radio => radio.checked);
+        if (selected > 0) {
+            options[selected - 1].click();
+        }
     }
-}
-
-function prevFile() {
-    var files = document.querySelectorAll('.file-item');
-    var currentIndex = Array.from(files).findIndex(f => f.classList.contains('active'));
-    if (currentIndex > 0) {
-        window.location.href = files[currentIndex - 1].querySelector('a').href;
-    }
-}
-</script>
-""", unsafe_allow_html=True)
+    </script>
+    """, unsafe_allow_html=True)
