@@ -125,11 +125,10 @@ with st.sidebar:
     # Save button in edit mode
     if st.session_state.edit_mode and st.session_state.current_file:
         if st.button("Save Changes"):
-            # Save changes to st.session_state.files
             st.session_state.files[st.session_state.current_file] = st.session_state.new_content
             st.success("Changes saved successfully!")
             st.session_state.edit_mode = False
-            st.rerun()
+            st.experimental_rerun()
 
 # Main content
 if st.session_state.files:
@@ -137,8 +136,7 @@ if st.session_state.files:
         # Display single file content
         content = st.session_state.files[st.session_state.current_file]
         if st.session_state.edit_mode:
-            new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{st.session_state.current_file}")
-            st.session_state.new_content = new_content
+            st.session_state.new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{st.session_state.current_file}")
         else:
             rendered_content = render_markdown(content)
             st.markdown(rendered_content, unsafe_allow_html=True)
