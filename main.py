@@ -88,10 +88,6 @@ if 'files' not in st.session_state:
     st.session_state.files = {}
 if 'edit_mode' not in st.session_state:
     st.session_state.edit_mode = False
-if 'compare_mode' not in st.session_state:
-    st.session_state.compare_mode = False
-if 'selected_files' not in st.session_state:
-    st.session_state.selected_files = []
 if 'current_file' not in st.session_state:
     st.session_state.current_file = None
 
@@ -101,14 +97,6 @@ def save_file(name, content):
 
 def render_markdown(text):
     return markdown2.markdown(text, extras=['fenced-code-blocks', 'tables', 'task_list', 'highlightjs-lang', 'underscore'])
-
-def remove_file(name):
-    if name in st.session_state.files:
-        del st.session_state.files[name]
-    if name in st.session_state.selected_files:
-        st.session_state.selected_files.remove(name)
-    if st.session_state.current_file == name:
-        st.session_state.current_file = None
 
 # Sidebar
 with st.sidebar:
@@ -129,25 +117,7 @@ with st.sidebar:
         active_class = "active" if file == st.session_state.current_file else ""
         if st.button(file, key=f"select_{file}", help=f"View {file}"):
             st.session_state.current_file = file
-            st.session_state.compare_mode = False
     st.markdown("</div>", unsafe_allow_html=True)
-    
-    # File management options
-    if st.session_state.files:
-        if st.button("Clear All Files"):
-            st.session_state.files.clear()
-            st.session_state.selected_files.clear()
-            st.session_state.current_file = None
-            st.rerun()
-    
-    # File selection for comparison
-    st.session_state.selected_files = st.multiselect("Select files for comparison", list(st.session_state.files.keys()), max_selections=2)
-    
-    # Compare mode toggle
-    if len(st.session_state.selected_files) == 2:
-        if st.button("Compare Selected Files"):
-            st.session_state.compare_mode = True
-            st.session_state.current_file = None
     
     # Edit mode toggle
     st.session_state.edit_mode = st.checkbox("Edit Mode", value=st.session_state.edit_mode)
@@ -163,19 +133,7 @@ with st.sidebar:
 
 # Main content
 if st.session_state.files:
-    if st.session_state.compare_mode and len(st.session_state.selected_files) == 2:
-        # Side-by-side comparison
-        col1, col2 = st.columns(2)
-        for i, file_name in enumerate(st.session_state.selected_files):
-            content = st.session_state.files[file_name]
-            with col1 if i == 0 else col2:
-                if st.session_state.edit_mode:
-                    new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{file_name}")
-                    st.session_state.new_content = new_content
-                else:
-                    rendered_content = render_markdown(content)
-                    st.markdown(rendered_content, unsafe_allow_html=True)
-    elif st.session_state.current_file:
+    if st.session_state.current_file:
         # Display single file content
         content = st.session_state.files[st.session_state.current_file]
         if st.session_state.edit_mode:
