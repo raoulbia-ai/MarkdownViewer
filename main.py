@@ -1,7 +1,5 @@
 import streamlit as st
 import markdown2
-import os
-import tempfile
 
 st.set_page_config(page_title="Modern Markdown Viewer", layout="wide")
 
@@ -32,15 +30,15 @@ st.markdown("""
         background-color: var(--primary-color);
         color: var(--background-color);
         border: none;
-        padding: 10px 20px;
+        padding: 6px 12px;
         text-align: center;
         text-decoration: none;
         display: inline-block;
-        font-size: 16px;
-        margin: 4px 2px;
+        font-size: 14px;
+        margin: 2px;
         transition-duration: 0.4s;
         cursor: pointer;
-        border-radius: 5px;
+        border-radius: 3px;
     }
     .stButton>button:hover {
         background-color: var(--secondary-color);
@@ -68,16 +66,27 @@ st.markdown("""
         margin: 5px 0;
         background-color: var(--background-color);
         border-radius: 3px;
-        cursor: pointer;
         color: var(--text-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
     .file-item:hover {
-        background-color: var(--primary-color);
-        color: var(--background-color);
+        background-color: var(--surface-color);
     }
     .file-item-active {
         background-color: var(--primary-color);
         color: var(--background-color);
+    }
+    .remove-button {
+        background-color: transparent;
+        border: none;
+        color: var(--text-color);
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .remove-button:hover {
+        color: var(--secondary-color);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -94,28 +103,9 @@ if 'editor_content' not in st.session_state:
 if 'last_edited_file' not in st.session_state:
     st.session_state.last_edited_file = None
 
-# Directory to save files (temporary directory)
-if 'save_directory' not in st.session_state:
-    st.session_state.save_directory = tempfile.gettempdir()
-
 # File handling functions
 def save_file(name, content):
     st.session_state.files[name] = content
-    # Save to disk
-    file_path = os.path.join(st.session_state.save_directory, name)
-    with open(file_path, 'w', encoding='utf-8') as f:
-        f.write(content)
-
-def load_file(name):
-    # Load from disk if exists
-    file_path = os.path.join(st.session_state.save_directory, name)
-    if os.path.exists(file_path):
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        st.session_state.files[name] = content
-        return content
-    else:
-        return st.session_state.files.get(name, '')
 
 def render_markdown(text):
     return markdown2.markdown(text, extras=['fenced-code-blocks', 'tables', 'task_list', 'highlightjs-lang', 'underscore'])
@@ -136,16 +126,24 @@ with st.sidebar:
     st.markdown(f"<h3>Files ({len(st.session_state.files)})</h3>", unsafe_allow_html=True)
     
     if st.session_state.files:
-        # Use st.radio for file selection
-        selected_file = st.radio(
-            label="Select a file",
-            options=list(st.session_state.files.keys()),
-            index=list(st.session_state.files.keys()).index(st.session_state.current_file) if st.session_state.current_file else 0,
-            key='file_selector'
-        )
-        if selected_file != st.session_state.current_file:
-            st.session_state.current_file = selected_file
-            st.session_state.edit_mode = False
+        # File selection and removal
+        files_to_remove = []
+        for file in st.session_state.files.keys():
+            is_active = (file == st.session_state.current_file)
+            file_display = f"**{file}**" if is_active else file
+            cols = st.columns([0.8, 0.2])
+            with cols[0]:
+                if st.button(file_display, key=f"select_{file}"):
+                    st.session_state.current_file = file
+                    st.session_state.edit_mode = False
+            with cols[1]:
+                if st.button("✖", key=f"remove_{file}", help="Remove file", on_click=None):
+                    files_to_remove.append(file)
+        # Remove files outside the loop to avoid runtime errors
+        for file in files_to_remove:
+            del st.session_state.files[file]
+            if st.session_state.current_file == file:
+                st.session_state.current_file = None
     else:
         st.info("No files uploaded yet.")
 
@@ -157,17 +155,25 @@ with st.sidebar:
         if st.session_state.edit_mode:
             # Save Changes button in the sidebar
             if st.button("Save Changes"):
-                # Save the modified content
+                # Update the in-memory content
                 save_file(st.session_state.current_file, st.session_state.editor_content)
                 st.success("Changes saved successfully!")
                 st.session_state.edit_mode = False
                 # No need to reset editor content because it will be reloaded
 
+            # Download modified file
+            st.download_button(
+                label="Download Modified File",
+                data=st.session_state.editor_content,
+                file_name=st.session_state.current_file,
+                mime="text/markdown"
+            )
+
 # Main content
 if st.session_state.files:
     if st.session_state.current_file:
         # Display single file content
-        content = load_file(st.session_state.current_file)
+        content = st.session_state.files[st.session_state.current_file]
         
         if st.session_state.edit_mode:
             # Initialize editor_content if the file has changed
@@ -203,18 +209,18 @@ if st.session_state.files:
     });
     
     function nextFile() {
-        const options = document.querySelectorAll('input[type="radio"]');
-        const selected = Array.from(options).findIndex(radio => radio.checked);
-        if (selected < options.length - 1) {
-            options[selected + 1].click();
+        const buttons = Array.from(document.querySelectorAll('button[kind="secondary"]')).filter(btn => btn.innerText !== '✖');
+        const selectedIndex = buttons.findIndex(btn => btn.style.fontWeight === 'bold');
+        if (selectedIndex < buttons.length - 1) {
+            buttons[selectedIndex + 1].click();
         }
     }
     
     function prevFile() {
-        const options = document.querySelectorAll('input[type="radio"]');
-        const selected = Array.from(options).findIndex(radio => radio.checked);
-        if (selected > 0) {
-            options[selected - 1].click();
+        const buttons = Array.from(document.querySelectorAll('button[kind="secondary"]')).filter(btn => btn.innerText !== '✖');
+        const selectedIndex = buttons.findIndex(btn => btn.style.fontWeight === 'bold');
+        if (selectedIndex > 0) {
+            buttons[selectedIndex - 1].click();
         }
     }
     </script>
