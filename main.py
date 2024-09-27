@@ -1,6 +1,5 @@
 import streamlit as st
 import markdown2
-from streamlit_ace import st_ace
 import os
 import tempfile
 
@@ -176,10 +175,10 @@ if st.session_state.files:
                 st.session_state.editor_content = content
                 st.session_state.last_edited_file = st.session_state.current_file
             
-            st.session_state.editor_content = st_ace(
+            st.session_state.editor_content = st.text_area(
+                label="Edit Markdown",
                 value=st.session_state.editor_content,
-                language="markdown",
-                theme="monokai",
+                height=500,
                 key=f"editor_{st.session_state.current_file}"
             )
             # Save Changes button is in the sidebar
