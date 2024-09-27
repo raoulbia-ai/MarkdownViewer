@@ -120,12 +120,12 @@ with st.sidebar:
     st.markdown("</div>", unsafe_allow_html=True)
     
     # Edit mode toggle
-    st.session_state.edit_mode = st.checkbox("Edit Mode", value=st.session_state.edit_mode)
+    edit_mode = st.checkbox("Edit Mode", value=st.session_state.get('edit_mode', False))
     
     # Save button in edit mode
-    if st.session_state.edit_mode and st.session_state.current_file:
+    if edit_mode and st.session_state.current_file:
         if st.button("Save Changes"):
-            st.session_state.files[st.session_state.current_file] = st.session_state.new_content
+            st.session_state.files[st.session_state.current_file] = st.session_state.get('new_content', '')
             st.success("Changes saved successfully!")
             st.session_state.edit_mode = False
             st.experimental_rerun()
@@ -135,8 +135,9 @@ if st.session_state.files:
     if st.session_state.current_file:
         # Display single file content
         content = st.session_state.files[st.session_state.current_file]
-        if st.session_state.edit_mode:
-            st.session_state.new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{st.session_state.current_file}")
+        if edit_mode:
+            new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{st.session_state.current_file}")
+            st.session_state.new_content = new_content
         else:
             rendered_content = render_markdown(content)
             st.markdown(rendered_content, unsafe_allow_html=True)
