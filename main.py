@@ -128,7 +128,7 @@ with st.sidebar:
             st.session_state.files[st.session_state.current_file] = st.session_state.get('new_content', '')
             st.success("Changes saved successfully!")
             st.session_state.edit_mode = False
-            st.experimental_rerun()
+            st.rerun()
 
 # Main content
 if st.session_state.files:
