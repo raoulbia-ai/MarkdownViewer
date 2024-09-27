@@ -74,7 +74,7 @@ st.markdown("""
     }
     .file-item:hover {
         background-color: var(--primary-color);
-        color: var (--background-color);
+        color: var(--background-color);
     }
     .file-item.active {
         background-color: var(--primary-color);
@@ -90,6 +90,10 @@ if 'current_file' not in st.session_state:
     st.session_state.current_file = None
 if 'edit_mode' not in st.session_state:
     st.session_state.edit_mode = False
+if 'editor_content' not in st.session_state:
+    st.session_state.editor_content = ''
+if 'last_edited_file' not in st.session_state:
+    st.session_state.last_edited_file = None
 
 # File handling functions
 def save_file(name, content):
@@ -110,14 +114,21 @@ with st.sidebar:
             content = uploaded_file.getvalue().decode("utf-8")
             save_file(uploaded_file.name, content)
     
+    # Get file parameter from URL
+    query_params = st.experimental_get_query_params()
+    if 'file' in query_params:
+        file_param = query_params['file'][0]
+        if file_param in st.session_state.files:
+            st.session_state.current_file = file_param
+            st.session_state.edit_mode = False
+    
     # Display file list and total count
     st.markdown(f"<h3>Files ({len(st.session_state.files)})</h3>", unsafe_allow_html=True)
     st.markdown("<div class='file-list'>", unsafe_allow_html=True)
     for file in st.session_state.files.keys():
         active_class = "active" if file == st.session_state.current_file else ""
-        if st.button(file, key=f"select_{file}", help=f"View {file}"):
-            st.session_state.current_file = file
-            st.session_state.edit_mode = False
+        file_html = f"<div class='file-item {active_class}'><a href='?file={file}'>{file}</a></div>"
+        st.markdown(file_html, unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
     
     # Edit mode toggle
@@ -130,28 +141,25 @@ if st.session_state.files:
         # Display single file content
         content = st.session_state.files[st.session_state.current_file]
         
-    if st.session_state.edit_mode:
-        # Initialize editor_content in session state if it doesn't exist
-        if 'editor_content' not in st.session_state or st.session_state.current_file != st.session_state.get('last_edited_file', None):
-            st.session_state.editor_content = content
-            st.session_state.last_edited_file = st.session_state.current_file
-
-        # Update editor content with st_ace
-        st.session_state.editor_content = st_ace(
-            value=st.session_state.editor_content,
-            language="markdown",
-            theme="monokai",
-            key=f"editor_{st.session_state.current_file}"
-        )
-
-        if st.button("Save Changes"):
-            save_file(st.session_state.current_file, st.session_state.editor_content)
-            st.success("Changes saved successfully!")
-            # Optionally, you can reset the editor content or exit edit mode
-            st.session_state.edit_mode = False
-            del st.session_state.editor_content
-            del st.session_state.last_edited_file
-
+        if st.session_state.edit_mode:
+            # Initialize editor_content if the file has changed
+            if st.session_state.last_edited_file != st.session_state.current_file:
+                st.session_state.editor_content = content
+                st.session_state.last_edited_file = st.session_state.current_file
+            
+            st.session_state.editor_content = st_ace(
+                value=st.session_state.editor_content,
+                language="markdown",
+                theme="monokai",
+                key=f"editor_{st.session_state.current_file}"
+            )
+            if st.button("Save Changes"):
+                save_file(st.session_state.current_file, st.session_state.editor_content)
+                st.success("Changes saved successfully!")
+                st.session_state.edit_mode = False
+                # Reset editor content
+                st.session_state.editor_content = ''
+                st.session_state.last_edited_file = None
         else:
             rendered_content = render_markdown(content)
             st.markdown(rendered_content, unsafe_allow_html=True)
@@ -175,7 +183,7 @@ function nextFile() {
     var files = document.querySelectorAll('.file-item');
     var currentIndex = Array.from(files).findIndex(f => f.classList.contains('active'));
     if (currentIndex < files.length - 1) {
-        files[currentIndex + 1].click();
+        window.location.href = files[currentIndex + 1].querySelector('a').href;
     }
 }
 
@@ -183,7 +191,7 @@ function prevFile() {
     var files = document.querySelectorAll('.file-item');
     var currentIndex = Array.from(files).findIndex(f => f.classList.contains('active'));
     if (currentIndex > 0) {
-        files[currentIndex - 1].click();
+        window.location.href = files[currentIndex - 1].querySelector('a').href;
     }
 }
 </script>
