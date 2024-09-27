@@ -135,8 +135,7 @@ if st.session_state.files:
             if st.button("Save Changes"):
                 save_file(st.session_state.current_file, new_content)
                 st.success("Changes saved successfully!")
-                st.session_state.edit_mode = False
-                st.experimental_rerun()
+                st.experimental_set_query_params(rerun=True)
         else:
             rendered_content = render_markdown(content)
             st.markdown(rendered_content, unsafe_allow_html=True)
