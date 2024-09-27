@@ -86,8 +86,6 @@ st.markdown("""
 # Session state initialization
 if 'files' not in st.session_state:
     st.session_state.files = {}
-if 'edit_mode' not in st.session_state:
-    st.session_state.edit_mode = False
 if 'current_file' not in st.session_state:
     st.session_state.current_file = None
 
@@ -118,17 +116,6 @@ with st.sidebar:
         if st.button(file, key=f"select_{file}", help=f"View {file}"):
             st.session_state.current_file = file
     st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Edit mode toggle
-    edit_mode = st.checkbox("Edit Mode", value=st.session_state.get('edit_mode', False))
-    
-    # Save button in edit mode
-    if edit_mode and st.session_state.current_file:
-        if st.button("Save Changes"):
-            st.session_state.files[st.session_state.current_file] = st.session_state.get('new_content', '')
-            st.success("Changes saved successfully!")
-            st.session_state.edit_mode = False
-            st.rerun()
 
 # Main content
 if st.session_state.files:
@@ -143,7 +130,7 @@ if st.session_state.files:
         if st.button("Save Changes"):
             save_file(st.session_state.current_file, new_content)
             st.success("Changes saved successfully!")
-            st.rerun()
+            st.experimental_rerun()
         
         # Preview
         st.markdown("### Preview:")
