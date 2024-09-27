@@ -13,6 +13,7 @@ weasyprint = "^62.3"
 markdown = "^3.7"
 streamlit-ace = "^0.1.1"
 pygments = "^2.18.0"
+markdown2 = "^2.5.0"
 
 
 [build-system]
