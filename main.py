@@ -135,12 +135,20 @@ if st.session_state.files:
     if st.session_state.current_file:
         # Display single file content
         content = st.session_state.files[st.session_state.current_file]
-        if edit_mode:
-            new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{st.session_state.current_file}")
-            st.session_state.new_content = new_content
-        else:
-            rendered_content = render_markdown(content)
-            st.markdown(rendered_content, unsafe_allow_html=True)
+        
+        # Editor
+        new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{st.session_state.current_file}")
+        
+        # Save button
+        if st.button("Save Changes"):
+            save_file(st.session_state.current_file, new_content)
+            st.success("Changes saved successfully!")
+            st.rerun()
+        
+        # Preview
+        st.markdown("### Preview:")
+        rendered_content = render_markdown(new_content)
+        st.markdown(rendered_content, unsafe_allow_html=True)
     else:
         st.info("Select a file from the sidebar to view its content.")
 else:
