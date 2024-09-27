@@ -51,24 +51,6 @@ st.markdown("""
         padding: 10px;
         border-radius: 5px;
     }
-    /* Tab styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
-        background-color: var(--surface-color);
-        border-radius: 4px 4px 0 0;
-        gap: 4px;
-        padding-top: 10px;
-        padding-bottom: 10px;
-        color: var(--text-color);
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: var(--primary-color);
-        color: var(--background-color);
-    }
     /* Ensure line breaks are respected */
     .markdown-body p {
         white-space: pre-wrap;
@@ -88,6 +70,10 @@ st.markdown("""
         margin: 5px 0;
         background-color: var(--background-color);
         border-radius: 3px;
+        cursor: pointer;
+    }
+    .file-item:hover {
+        background-color: var(--primary-color);
     }
     .file-name {
         font-weight: bold;
@@ -109,6 +95,8 @@ if 'compare_mode' not in st.session_state:
     st.session_state.compare_mode = False
 if 'selected_files' not in st.session_state:
     st.session_state.selected_files = []
+if 'current_file' not in st.session_state:
+    st.session_state.current_file = None
 
 # File handling functions
 def save_file(name, content):
@@ -136,18 +124,19 @@ with st.sidebar:
     # Display file list
     st.markdown("<div class='file-list'>", unsafe_allow_html=True)
     for file in filtered_files:
-        st.markdown(f"""
-        <div class='file-item'>
-            <span class='file-name'>{file}</span>
-        </div>
-        """, unsafe_allow_html=True)
+        if st.button(file, key=f"btn_{file}"):
+            st.session_state.current_file = file
+            st.session_state.compare_mode = False
     st.markdown("</div>", unsafe_allow_html=True)
     
     # File selection for comparison
     st.session_state.selected_files = st.multiselect("Select files for comparison", list(st.session_state.files.keys()), max_selections=2)
     
     # Compare mode toggle
-    st.session_state.compare_mode = st.checkbox("Compare Mode", value=st.session_state.compare_mode)
+    if len(st.session_state.selected_files) == 2:
+        if st.button("Compare Selected Files"):
+            st.session_state.compare_mode = True
+            st.session_state.current_file = None
     
     # Edit mode toggle
     st.session_state.edit_mode = st.checkbox("Edit Mode", value=st.session_state.edit_mode)
@@ -167,22 +156,24 @@ if st.session_state.files:
         for i, file_name in enumerate(st.session_state.selected_files):
             content = st.session_state.files[file_name]
             with col1 if i == 0 else col2:
+                st.subheader(file_name)
                 if st.session_state.edit_mode:
                     new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{file_name}")
                     st.session_state.files[file_name] = new_content
                 else:
                     rendered_content = render_markdown(content)
                     st.markdown(rendered_content, unsafe_allow_html=True)
+    elif st.session_state.current_file:
+        # Display single file content
+        content = st.session_state.files[st.session_state.current_file]
+        st.subheader(st.session_state.current_file)
+        if st.session_state.edit_mode:
+            new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{st.session_state.current_file}")
+            st.session_state.files[st.session_state.current_file] = new_content
+        else:
+            rendered_content = render_markdown(content)
+            st.markdown(rendered_content, unsafe_allow_html=True)
     else:
-        # Regular tab view
-        tabs = st.tabs(list(st.session_state.files.keys()))
-        for i, (file_name, content) in enumerate(st.session_state.files.items()):
-            with tabs[i]:
-                if st.session_state.edit_mode:
-                    new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{file_name}")
-                    st.session_state.files[file_name] = new_content
-                else:
-                    rendered_content = render_markdown(content)
-                    st.markdown(rendered_content, unsafe_allow_html=True)
+        st.info("Select a file from the sidebar to view its content.")
 else:
     st.empty()  # Blank main area when no files are uploaded
