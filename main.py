@@ -157,18 +157,18 @@ def render_markdown(text):
 # Sidebar
 with st.sidebar:
     st.title("Markdown Viewer")
-    
+
     # File uploader
     uploaded_files = st.file_uploader("Choose Markdown file(s)", accept_multiple_files=True, type=['md'])
-    
+
     if uploaded_files:
         for uploaded_file in uploaded_files:
             content = uploaded_file.getvalue().decode("utf-8")
             save_file(uploaded_file.name, content)
-    
+
     # Display file list and total count
     st.markdown(f"<h3>Files ({len(st.session_state.files)})</h3>", unsafe_allow_html=True)
-    
+
     if st.session_state.files:
         # File selection and removal
         files_to_remove = []
@@ -179,7 +179,8 @@ with st.sidebar:
             file_link = f"<a href='?file={file}' class='file-link {active_class}'>{file}</a>"
             st.markdown(file_link, unsafe_allow_html=True)
             # Add remove button
-            if st.button("✖", key=f"remove_{file}", help="Remove file"):
+            remove_button = st.button("✖", key=f"remove_{file}", help="Remove file")
+            if remove_button:
                 files_to_remove.append(file)
         # Remove files outside the loop to avoid runtime errors
         for file in files_to_remove:
@@ -190,7 +191,7 @@ with st.sidebar:
         st.info("No files uploaded yet.")
 
     # Get the selected file from the query parameters
-    query_params = st.experimental_get_query_params()
+    query_params = st.get_query_params()
     if 'file' in query_params:
         selected_file = query_params['file'][0]
         if selected_file != st.session_state.current_file:
@@ -225,13 +226,13 @@ if st.session_state.files:
     if st.session_state.current_file:
         # Display single file content
         content = st.session_state.files[st.session_state.current_file]
-        
+
         if st.session_state.edit_mode:
             # Initialize editor_content if the file has changed
             if st.session_state.last_edited_file != st.session_state.current_file:
                 st.session_state.editor_content = content
                 st.session_state.last_edited_file = st.session_state.current_file
-            
+
             st.session_state.editor_content = st.text_area(
                 label="Edit Markdown",
                 value=st.session_state.editor_content,
