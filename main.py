@@ -107,14 +107,17 @@ with st.sidebar:
     # Edit mode toggle
     st.session_state.edit_mode = st.checkbox("Edit Mode", value=st.session_state.edit_mode)
     
-    # Print PDF button
+    # Print button
     if st.session_state.files:
-        if st.button("Print PDF"):
+        if st.button("Print"):
             st.markdown(
                 """
                 <script>
-                    window.print();
+                    function printContent() {
+                        window.print();
+                    }
                 </script>
+                <button onclick="printContent()">Print</button>
                 """,
                 unsafe_allow_html=True
             )
@@ -122,7 +125,9 @@ with st.sidebar:
     # Save button in edit mode
     if st.session_state.edit_mode:
         if st.button("Save Changes"):
-            st.success("Changes saved successfully!")
+            st.session_state.edit_mode = False
+            st.success("Changes saved successfully! Switched to render mode.")
+            st.experimental_rerun()
 
 # Main content
 if st.session_state.files:
@@ -140,4 +145,3 @@ if st.session_state.files:
                 st.markdown(rendered_content, unsafe_allow_html=True)
 else:
     st.empty()  # Blank main area when no files are uploaded
-
