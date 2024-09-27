@@ -62,6 +62,30 @@ st.markdown("""
     * {
         transition: all 0.3s ease;
     }
+    /* File list styling */
+    .file-list {
+        background-color: #f0f0f0;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+    .file-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 10px;
+        margin: 5px 0;
+        background-color: white;
+        border-radius: 3px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    .file-name {
+        font-weight: bold;
+    }
+    .file-size {
+        color: #666;
+        font-size: 0.8em;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -105,6 +129,17 @@ def get_binary_file_downloader_html(bin_file, file_label='File'):
     href = f'<a href="data:application/octet-stream;base64,{bin_str}" download="{file_label}" class="stButton">Download {file_label}</a>'
     return href
 
+def display_file_list(files):
+    st.markdown("<div class='file-list'>", unsafe_allow_html=True)
+    for file in files:
+        st.markdown(f"""
+        <div class='file-item'>
+            <span class='file-name'>{file.name}</span>
+            <span class='file-size'>{file.size} bytes</span>
+        </div>
+        """, unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
 # Sidebar
 with st.sidebar:
     st.title("Markdown Viewer")
@@ -113,6 +148,17 @@ with st.sidebar:
     uploaded_files = st.file_uploader("Choose Markdown file(s)", accept_multiple_files=True, type=['md'])
     
     if uploaded_files:
+        st.write(f"Selected {len(uploaded_files)} file(s)")
+        display_file_list(uploaded_files)
+        
+        # Search/filter function
+        search_term = st.text_input("Search files", "")
+        filtered_files = [file for file in uploaded_files if search_term.lower() in file.name.lower()]
+        
+        if search_term:
+            st.write(f"Found {len(filtered_files)} matching file(s)")
+            display_file_list(filtered_files)
+        
         for uploaded_file in uploaded_files:
             content = uploaded_file.getvalue().decode("utf-8")
             save_file(uploaded_file.name, content)
