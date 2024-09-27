@@ -98,7 +98,11 @@ st.markdown("""
 
 # Session state initialization
 if 'files' not in st.session_state:
-    st.session_state.files = {}
+    st.session_state.files = {
+        'sample1.md': '# Sample 1\n\nThis is the content of sample 1.',
+        'sample2.md': '# Sample 2\n\nThis is the content of sample 2.',
+        'sample3.md': '# Sample 3\n\nThis is the content of sample 3.'
+    }
 if 'edit_mode' not in st.session_state:
     st.session_state.edit_mode = False
 if 'compare_mode' not in st.session_state:
@@ -163,7 +167,6 @@ if st.session_state.files:
         for i, file_name in enumerate(st.session_state.selected_files):
             content = st.session_state.files[file_name]
             with col1 if i == 0 else col2:
-                st.subheader(file_name)
                 if st.session_state.edit_mode:
                     new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{file_name}")
                     st.session_state.files[file_name] = new_content
