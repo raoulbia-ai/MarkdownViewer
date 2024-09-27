@@ -76,6 +76,10 @@ st.markdown("""
         background-color: var(--primary-color);
         color: var(--background-color);
     }
+    .file-item.active {
+        background-color: var(--primary-color);
+        color: var(--background-color);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -98,6 +102,14 @@ def save_file(name, content):
 def render_markdown(text):
     return markdown2.markdown(text, extras=['fenced-code-blocks', 'tables', 'task_list', 'highlightjs-lang'])
 
+def remove_file(name):
+    if name in st.session_state.files:
+        del st.session_state.files[name]
+    if name in st.session_state.selected_files:
+        st.session_state.selected_files.remove(name)
+    if st.session_state.current_file == name:
+        st.session_state.current_file = None
+
 # Sidebar
 with st.sidebar:
     st.title("Markdown Viewer")
@@ -113,8 +125,17 @@ with st.sidebar:
     # Display file list
     st.markdown("<div class='file-list'>", unsafe_allow_html=True)
     for file in st.session_state.files.keys():
-        st.markdown(f"<a href='#' class='file-item' onclick=\"streamlit.setComponentValue('{file}')\">{file}</a>", unsafe_allow_html=True)
+        active_class = "active" if file == st.session_state.current_file else ""
+        st.markdown(f"<a href='#' class='file-item {active_class}' onclick=\"streamlit.setComponentValue('{file}')\">{file}</a>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
+    
+    # File management options
+    if st.session_state.files:
+        if st.button("Clear All Files"):
+            st.session_state.files.clear()
+            st.session_state.selected_files.clear()
+            st.session_state.current_file = None
+            st.rerun()
     
     # File selection for comparison
     st.session_state.selected_files = st.multiselect("Select files for comparison", list(st.session_state.files.keys()), max_selections=2)
@@ -129,10 +150,10 @@ with st.sidebar:
     st.session_state.edit_mode = st.checkbox("Edit Mode", value=st.session_state.edit_mode)
     
     # Save button in edit mode
-    if st.session_state.edit_mode:
+    if st.session_state.edit_mode and st.session_state.current_file:
         if st.button("Save Changes"):
+            st.success("Changes saved successfully!")
             st.session_state.edit_mode = False
-            st.success("Changes saved successfully! Switched to render mode.")
             st.rerun()
 
 # Handle file selection
@@ -162,6 +183,9 @@ if st.session_state.files:
         # Display single file content
         content = st.session_state.files[st.session_state.current_file]
         st.subheader(st.session_state.current_file)
+        if st.button("Remove File"):
+            remove_file(st.session_state.current_file)
+            st.rerun()
         if st.session_state.edit_mode:
             new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{st.session_state.current_file}")
             st.session_state.files[st.session_state.current_file] = new_content
@@ -172,3 +196,32 @@ if st.session_state.files:
         st.info("Select a file from the sidebar to view its content.")
 else:
     st.empty()  # Blank main area when no files are uploaded
+
+# Keyboard navigation
+st.markdown("""
+<script>
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'ArrowRight') {
+        nextFile();
+    } else if (e.ctrlKey && e.key === 'ArrowLeft') {
+        prevFile();
+    }
+});
+
+function nextFile() {
+    var files = document.querySelectorAll('.file-item');
+    var currentIndex = Array.from(files).findIndex(f => f.classList.contains('active'));
+    if (currentIndex < files.length - 1) {
+        files[currentIndex + 1].click();
+    }
+}
+
+function prevFile() {
+    var files = document.querySelectorAll('.file-item');
+    var currentIndex = Array.from(files).findIndex(f => f.classList.contains('active'));
+    if (currentIndex > 0) {
+        files[currentIndex - 1].click();
+    }
+}
+</script>
+""", unsafe_allow_html=True)
