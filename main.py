@@ -80,20 +80,6 @@ st.markdown("""
         background-color: var(--primary-color);
         color: var(--background-color);
     }
-    /* Tab styling */
-    .stTabs {
-        background-color: var(--surface-color);
-        border-radius: 5px;
-        padding: 10px;
-    }
-    .stTab {
-        color: var(--text-color);
-        background-color: var(--background-color);
-    }
-    .stTab[aria-selected="true"] {
-        color: var(--background-color);
-        background-color: var(--primary-color);
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -141,7 +127,9 @@ with st.sidebar:
     st.markdown("<div class='file-list'>", unsafe_allow_html=True)
     for file in st.session_state.files.keys():
         active_class = "active" if file == st.session_state.current_file else ""
-        st.markdown(f"<a href='#' class='file-item {active_class}' onclick=\"streamlit.setComponentValue('{file}')\">{file}</a>", unsafe_allow_html=True)
+        if st.button(file, key=f"select_{file}", help=f"View {file}"):
+            st.session_state.current_file = file
+            st.session_state.compare_mode = False
     st.markdown("</div>", unsafe_allow_html=True)
     
     # File management options
@@ -171,14 +159,6 @@ with st.sidebar:
             st.session_state.edit_mode = False
             st.rerun()
 
-# Handle file selection
-if st.session_state.files:
-    selected_file = st.session_state.get("selected_file")
-    if selected_file:
-        st.session_state.current_file = selected_file
-        st.session_state.compare_mode = False
-        st.rerun()
-
 # Main content
 if st.session_state.files:
     if st.session_state.compare_mode and len(st.session_state.selected_files) == 2:
@@ -187,28 +167,23 @@ if st.session_state.files:
         for i, file_name in enumerate(st.session_state.selected_files):
             content = st.session_state.files[file_name]
             with col1 if i == 0 else col2:
-                st.subheader(file_name)
                 if st.session_state.edit_mode:
                     new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{file_name}")
                     st.session_state.files[file_name] = new_content
                 else:
                     rendered_content = render_markdown(content)
                     st.markdown(rendered_content, unsafe_allow_html=True)
+    elif st.session_state.current_file:
+        # Display single file content
+        content = st.session_state.files[st.session_state.current_file]
+        if st.session_state.edit_mode:
+            new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{st.session_state.current_file}")
+            st.session_state.files[st.session_state.current_file] = new_content
+        else:
+            rendered_content = render_markdown(content)
+            st.markdown(rendered_content, unsafe_allow_html=True)
     else:
-        # Display files in tabs
-        tabs = st.tabs(list(st.session_state.files.keys()))
-        for i, (file_name, content) in enumerate(st.session_state.files.items()):
-            with tabs[i]:
-                st.subheader(file_name)
-                if st.button(f"Remove {file_name}", key=f"remove_{file_name}"):
-                    remove_file(file_name)
-                    st.rerun()
-                if st.session_state.edit_mode:
-                    new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{file_name}")
-                    st.session_state.files[file_name] = new_content
-                else:
-                    rendered_content = render_markdown(content)
-                    st.markdown(rendered_content, unsafe_allow_html=True)
+        st.info("Select a file from the sidebar to view its content.")
 else:
     st.info("Upload Markdown files using the sidebar to view and edit their content.")
 
