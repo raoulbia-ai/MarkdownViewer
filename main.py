@@ -100,7 +100,7 @@ def save_file(name, content):
     st.session_state.files[name] = content
 
 def render_markdown(text):
-    return markdown2.markdown(text, extras=['fenced-code-blocks', 'tables', 'task_list', 'highlightjs-lang'])
+    return markdown2.markdown(text, extras=['fenced-code-blocks', 'tables', 'task_list', 'highlightjs-lang', 'underscore'])
 
 def remove_file(name):
     if name in st.session_state.files:
@@ -155,6 +155,8 @@ with st.sidebar:
     # Save button in edit mode
     if st.session_state.edit_mode and st.session_state.current_file:
         if st.button("Save Changes"):
+            # Save changes to st.session_state.files
+            st.session_state.files[st.session_state.current_file] = st.session_state.new_content
             st.success("Changes saved successfully!")
             st.session_state.edit_mode = False
             st.rerun()
@@ -169,7 +171,7 @@ if st.session_state.files:
             with col1 if i == 0 else col2:
                 if st.session_state.edit_mode:
                     new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{file_name}")
-                    st.session_state.files[file_name] = new_content
+                    st.session_state.new_content = new_content
                 else:
                     rendered_content = render_markdown(content)
                     st.markdown(rendered_content, unsafe_allow_html=True)
@@ -178,7 +180,7 @@ if st.session_state.files:
         content = st.session_state.files[st.session_state.current_file]
         if st.session_state.edit_mode:
             new_content = st_ace(value=content, language="markdown", theme="monokai", key=f"editor_{st.session_state.current_file}")
-            st.session_state.files[st.session_state.current_file] = new_content
+            st.session_state.new_content = new_content
         else:
             rendered_content = render_markdown(content)
             st.markdown(rendered_content, unsafe_allow_html=True)
