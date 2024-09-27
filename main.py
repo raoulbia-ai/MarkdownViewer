@@ -63,32 +63,25 @@ st.markdown("""
         margin-bottom: 10px;
     }
     .file-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        display: block;
         padding: 5px 10px;
         margin: 5px 0;
         background-color: var(--background-color);
         border-radius: 3px;
         cursor: pointer;
+        text-decoration: none;
+        color: var(--text-color);
     }
     .file-item:hover {
         background-color: var(--primary-color);
-    }
-    .file-name {
-        font-weight: bold;
-        color: var(--text-color);
+        color: var(--background-color);
     }
 </style>
 """, unsafe_allow_html=True)
 
 # Session state initialization
 if 'files' not in st.session_state:
-    st.session_state.files = {
-        'sample1.md': '# Sample 1\n\nThis is the content of sample 1.',
-        'sample2.md': '# Sample 2\n\nThis is the content of sample 2.',
-        'sample3.md': '# Sample 3\n\nThis is the content of sample 3.'
-    }
+    st.session_state.files = {}
 if 'edit_mode' not in st.session_state:
     st.session_state.edit_mode = False
 if 'compare_mode' not in st.session_state:
@@ -117,16 +110,10 @@ with st.sidebar:
             content = uploaded_file.getvalue().decode("utf-8")
             save_file(uploaded_file.name, content)
     
-    # Search/filter function
-    search_term = st.text_input("Search files", "")
-    filtered_files = [file for file in st.session_state.files.keys() if search_term.lower() in file.lower()]
-    
     # Display file list
     st.markdown("<div class='file-list'>", unsafe_allow_html=True)
-    for file in filtered_files:
-        if st.button(file, key=f"btn_{file}"):
-            st.session_state.current_file = file
-            st.session_state.compare_mode = False
+    for file in st.session_state.files.keys():
+        st.markdown(f"<a href='#' class='file-item' onclick=\"streamlit.setComponentValue('{file}')\">{file}</a>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
     
     # File selection for comparison
@@ -147,6 +134,14 @@ with st.sidebar:
             st.session_state.edit_mode = False
             st.success("Changes saved successfully! Switched to render mode.")
             st.rerun()
+
+# Handle file selection
+if st.session_state.files:
+    selected_file = st.session_state.get("selected_file")
+    if selected_file:
+        st.session_state.current_file = selected_file
+        st.session_state.compare_mode = False
+        st.rerun()
 
 # Main content
 if st.session_state.files:
