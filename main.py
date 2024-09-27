@@ -1,6 +1,7 @@
 import streamlit as st
 import markdown2
 from streamlit_ace import st_ace
+import base64
 
 st.set_page_config(page_title="Modern Markdown Viewer", layout="wide")
 
@@ -100,6 +101,11 @@ def save_file(name, content):
 def render_markdown(text):
     return markdown2.markdown(text, extras=['fenced-code-blocks', 'tables', 'task_list', 'highlightjs-lang', 'underscore'])
 
+def get_download_link(content, filename):
+    b64 = base64.b64encode(content.encode()).decode()
+    href = f'<a href="data:file/text;base64,{b64}" download="{filename}">Click here to save {filename}</a>'
+    return href
+
 # Sidebar
 with st.sidebar:
     st.title("Markdown Viewer")
@@ -136,18 +142,15 @@ with st.sidebar:
     # Only visible in edit mode
     if st.session_state.edit_mode:
         # Save Changes button in the sidebar
-        def save_changes():
+        if st.button("Save Changes"):
+            # Update the file content in session_state
             st.session_state.files[st.session_state.current_file] = st.session_state.editor_content
             st.session_state.edit_mode = False
+            st.success("Changes saved successfully!")
 
-        st.download_button(
-            label="Save Changes",
-            data=st.session_state.editor_content,
-            file_name=st.session_state.current_file,
-            mime="text/markdown",
-            key="save_button",
-            on_click=save_changes
-        )
+            # Provide a download link
+            download_link = get_download_link(st.session_state.editor_content, st.session_state.current_file)
+            st.markdown(download_link, unsafe_allow_html=True)
 
 # Main content
 if st.session_state.files:
@@ -167,7 +170,7 @@ if st.session_state.files:
                 theme="monokai",
                 key=f"editor_{st.session_state.current_file}"
             )
-            # Removed the "Save Changes" button from here
+            # No Save Changes button here
         else:
             rendered_content = render_markdown(content)
             st.markdown(rendered_content, unsafe_allow_html=True)
@@ -175,6 +178,7 @@ if st.session_state.files:
         st.info("Select a file from the sidebar to view its content.")
 else:
     st.info("Upload Markdown files using the sidebar to view and edit their content.")
+
 
 # Keyboard navigation
 if st.session_state.files:
