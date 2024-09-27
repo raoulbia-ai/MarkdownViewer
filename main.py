@@ -1,7 +1,8 @@
 import streamlit as st
 import markdown2
 from streamlit_ace import st_ace
-import base64
+import os
+import tempfile
 
 st.set_page_config(page_title="Modern Markdown Viewer", layout="wide")
 
@@ -94,17 +95,31 @@ if 'editor_content' not in st.session_state:
 if 'last_edited_file' not in st.session_state:
     st.session_state.last_edited_file = None
 
+# Directory to save files (temporary directory)
+if 'save_directory' not in st.session_state:
+    st.session_state.save_directory = tempfile.gettempdir()
+
 # File handling functions
 def save_file(name, content):
     st.session_state.files[name] = content
+    # Save to disk
+    file_path = os.path.join(st.session_state.save_directory, name)
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+
+def load_file(name):
+    # Load from disk if exists
+    file_path = os.path.join(st.session_state.save_directory, name)
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        st.session_state.files[name] = content
+        return content
+    else:
+        return st.session_state.files.get(name, '')
 
 def render_markdown(text):
     return markdown2.markdown(text, extras=['fenced-code-blocks', 'tables', 'task_list', 'highlightjs-lang', 'underscore'])
-
-def get_download_link(content, filename):
-    b64 = base64.b64encode(content.encode()).decode()
-    href = f'<a href="data:file/text;base64,{b64}" download="{filename}">Click here to save {filename}</a>'
-    return href
 
 # Sidebar
 with st.sidebar:
@@ -139,24 +154,21 @@ with st.sidebar:
     if st.session_state.current_file:
         st.session_state.edit_mode = st.checkbox("Edit Mode", value=st.session_state.edit_mode)
 
-    # Only visible in edit mode
-    if st.session_state.edit_mode:
-        # Save Changes button in the sidebar
-        if st.button("Save Changes"):
-            # Update the file content in session_state
-            st.session_state.files[st.session_state.current_file] = st.session_state.editor_content
-            st.session_state.edit_mode = False
-            st.success("Changes saved successfully!")
-
-            # Provide a download link
-            download_link = get_download_link(st.session_state.editor_content, st.session_state.current_file)
-            st.markdown(download_link, unsafe_allow_html=True)
+        # Only visible in edit mode
+        if st.session_state.edit_mode:
+            # Save Changes button in the sidebar
+            if st.button("Save Changes"):
+                # Save the modified content
+                save_file(st.session_state.current_file, st.session_state.editor_content)
+                st.success("Changes saved successfully!")
+                st.session_state.edit_mode = False
+                # No need to reset editor content because it will be reloaded
 
 # Main content
 if st.session_state.files:
     if st.session_state.current_file:
         # Display single file content
-        content = st.session_state.files[st.session_state.current_file]
+        content = load_file(st.session_state.current_file)
         
         if st.session_state.edit_mode:
             # Initialize editor_content if the file has changed
@@ -170,7 +182,7 @@ if st.session_state.files:
                 theme="monokai",
                 key=f"editor_{st.session_state.current_file}"
             )
-            # No Save Changes button here
+            # Save Changes button is in the sidebar
         else:
             rendered_content = render_markdown(content)
             st.markdown(rendered_content, unsafe_allow_html=True)
@@ -178,7 +190,6 @@ if st.session_state.files:
         st.info("Select a file from the sidebar to view its content.")
 else:
     st.info("Upload Markdown files using the sidebar to view and edit their content.")
-
 
 # Keyboard navigation
 if st.session_state.files:
